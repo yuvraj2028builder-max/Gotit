@@ -1,0 +1,10 @@
+{
+  "description": "A freelance web designer’s portfolio for local service businesses, showcasing website concepts, packages, and a free audit request to help turn visits into quote leads.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
