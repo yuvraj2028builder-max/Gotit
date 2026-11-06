@@ -1,6 +1,8 @@
 import { FormEvent, useId, useState } from "react";
 
 const EMAIL = "yuvraj2028builder@gmail.com";
+const WEB3FORMS_ACCESS_KEY = "7d772e5b-e79d-40e4-aa40-2e885e94b6b4";
+const WEB3FORMS_ENDPOINT = "https://api.web3forms.com/submit";
 
 const problems = [
   {
@@ -339,21 +341,53 @@ function ComparisonSlider() {
 
 function AuditForm({ selectedPackage }: { selectedPackage: string }) {
   const [status, setStatus] = useState("");
+  const [sending, setSending] = useState(false);
 
-  function submitForm(event: FormEvent<HTMLFormElement>) {
+  async function submitForm(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const data = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const data = new FormData(form);
     const name = String(data.get("name") || "");
     const business = String(data.get("business") || "");
     const website = String(data.get("website") || "No website provided");
     const service = String(data.get("service") || "");
     const message = String(data.get("message") || "No additional message");
-    const subject = encodeURIComponent(`Free 3-point audit request — ${business}`);
-    const body = encodeURIComponent(
-      `Hi Yuvraj,\n\nI'd like a free 3-point website audit.\n\nName: ${name}\nBusiness: ${business}\nWebsite: ${website}\nWhat we do: ${service}\nPackage interest: ${selectedPackage || "Not selected"}\n\nMessage:\n${message}`,
-    );
-    setStatus("Your email app is opening with your request ready to send.");
-    window.location.href = `mailto:${EMAIL}?subject=${subject}&body=${body}`;
+
+    setSending(true);
+    setStatus("Sending your request…");
+
+    try {
+      const response = await fetch(WEB3FORMS_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          access_key: WEB3FORMS_ACCESS_KEY,
+          subject: `Free 3-point audit request — ${business}`,
+          from_name: `${name} (via gotit website)`,
+          name,
+          business,
+          website,
+          service,
+          package_interest: selectedPackage || "Not selected",
+          message,
+        }),
+      });
+
+      const result = await response.json();
+      if (response.ok && result.success) {
+        setStatus("Request sent! I'll reply within 24 hours. Check your inbox.");
+        form.reset();
+      } else {
+        setStatus(`Something went wrong: ${result.message || "please try again."}`);
+      }
+    } catch {
+      setStatus("Network error — please try again, or email me directly below.");
+    } finally {
+      setSending(false);
+    }
   }
 
   return (
@@ -396,8 +430,8 @@ function AuditForm({ selectedPackage }: { selectedPackage: string }) {
       {selectedPackage && (
         <p className="package-interest">Interested in: {selectedPackage} package</p>
       )}
-      <button className="button button-light form-submit" type="submit">
-        Send my free audit request <Arrow />
+      <button className="button button-light form-submit" type="submit" disabled={sending}>
+        {sending ? "Sending…" : <>Send my free audit request <Arrow /></>}
       </button>
       <p className="form-note">
         Prefer email? <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
